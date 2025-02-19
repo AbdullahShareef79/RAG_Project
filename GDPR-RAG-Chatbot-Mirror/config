@@ -1,0 +1,9 @@
+[core]
+	repositoryformatversion = 0
+	filemode = false
+	bare = false
+	symlinks = false
+	ignorecase = true
+[remote "origin"]
+	url = https://github.com/AbdullahShareef79/GDPR-RAG-Chatbot.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
