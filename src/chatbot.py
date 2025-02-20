@@ -1,9 +1,14 @@
-from fastapi import FastAPI, HTTPException
+import os
+import logging
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
-from retriever import retrieve_documents, load_vector_store
-from generator import ResponseGenerator
-import logging
+from src.retriever import retrieve_documents, load_vector_store
+from src.generator import ResponseGenerator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -12,12 +17,32 @@ logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI()
 
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Directory structure
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+# Serve static files
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+# Load Jinja2 templates
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
+
 # Load retriever and generator
 try:
-    retriever = load_vector_store("embeddings/")  # Load FAISS vector store
+    retriever = load_vector_store(os.path.join(BASE_DIR, "../embeddings"))  # Load FAISS vector store
     generator = ResponseGenerator(model_name="facebook/opt-1.3b")
 except Exception as e:
-    logger.error(f"Failed to initialize retriever or generator: {e}")
+    logger.error(f"Failed to initialize components: {e}")
     raise HTTPException(status_code=500, detail="Failed to initialize chatbot components.")
 
 # Define request format
@@ -30,12 +55,12 @@ class Response(BaseModel):
     retrieved_context: List[str]
     answer: str
 
-# Root endpoint
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to the GDPR RAG Chatbot! Use the /ask endpoint to query the chatbot."}
+# Home route
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
-# Query endpoint
+# Chatbot query endpoint
 @app.post("/ask", response_model=Response)
 async def ask_gdpr_bot(request: QueryRequest):
     try:
@@ -54,4 +79,4 @@ async def ask_gdpr_bot(request: QueryRequest):
 # Run the app
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDPR RAG Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f7fc;
+        }
+        #chat-container {
+            width: 50%;
+            margin: auto;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        #chat-output {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow: auto;
+            text-align: left;
+            background: #fff;
+        }
+        input {
+            padding: 10px;
+            width: 80%;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px;
+            background: green;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background: gray;
+            cursor: not-allowed;
+        }
+    </style>
+    <script>
+        async function sendMessage() {
+            let userInput = document.getElementById("user-input");
+            let chatOutput = document.getElementById("chat-output");
+            let sendButton = document.getElementById("send-btn");
+
+            let query = userInput.value.trim();
+            if (!query) return;
+
+            chatOutput.innerHTML += `<p><b>You:</b> ${query}</p>`;
+            chatOutput.scrollTop = chatOutput.scrollHeight; // Auto-scroll
+
+            // Disable button to prevent multiple clicks
+            sendButton.disabled = true;
+
+            try {
+                let response = await fetch("/ask", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ "query": query })
+                });
+
+                let data = await response.json();
+                chatOutput.innerHTML += `<p><b>Bot:</b> ${data.answer}</p>`;
+            } catch (error) {
+                chatOutput.innerHTML += `<p style="color:red;"><b>Error:</b> Failed to get a response.</p>`;
+            }
+
+            // Re-enable button and clear input field
+            userInput.value = "";
+            sendButton.disabled = false;
+            chatOutput.scrollTop = chatOutput.scrollHeight;
+        }
+
+        // Send message on "Enter" key press
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("user-input").addEventListener("keypress", function (event) {
+                if (event.key === "Enter") sendMessage();
+            });
+        });
+    </script>
+</head>
+<body>
+    <h2>GDPR RAG Chatbot</h2>
+    <div id="chat-container">
+        <div id="chat-output"></div>
+        <input type="text" id="user-input" placeholder="Ask a question...">
+        <button id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+</body>
+</html>
