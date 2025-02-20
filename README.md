@@ -16,7 +16,7 @@ A **Retrieval-Augmented Generation (RAG) chatbot** designed for answering GDPR-r
 
 ### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/your-repo/gdpr-rag-chatbot.git
+git clone https://github.com/your-repo/gdpr-rag-chatbot.git](https://github.com/AbdullahShareef79/RAG_Project.git
 cd gdpr-rag-chatbot
 ```
 
